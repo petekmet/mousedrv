@@ -19,16 +19,11 @@ install_irq
 		sta DMACTL
 		lda #2
 		sta GRACTL
-		lda #152
+		lda #$98     ;set PMBASE to $9800
 		sta PMBASE
-		lda #136
+		lda #(14*16)+10
 		sta pcolr0
-		ldx #16
-copycur		
-		dex
-		lda cursor,x
-		sta 39478,x
-		bne copycur 
+		;ldx #16
 		 
 		sei
 		lda #<start
@@ -53,7 +48,7 @@ start
 		lda CRITIC
 		bne finish
 		
-		lda porta
+		lda PORTA
 		ror
 		ror
 		ror
@@ -62,22 +57,38 @@ start
 		cmp prevy		;compare A with xret
 		beq stgx	 	;no change in xpos
 	
-	
 		ldx prevy
 		ldy ypos
 		jsr updcnt
 		sty ypos
 		sta prevy
 
-		lda ypos
-		sta bkcolor
-		
-stgx	lda porta
-		ror
-		ror
-		ror
-		ror
-		ror
+; clear cursor area
+		ldx $FF		;load number of lines to clear
+		lda #0		;load bitmap to clear with
+clear_cur
+		sta $9A00, x
+		dex
+		bne clear_cur
+
+; draw cursor
+		ldx #16
+		ldy ypos
+
+copycur:
+		lda cursor-1, x
+		sta $9A00, y
+		dey
+		dex
+		bne copycur
+
+; load encoders and update cursor position	
+stgx	lda PORTA
+		lsr
+		lsr
+		lsr
+		lsr
+		lsr
 		and #5
 		
 		cmp prevx		;compare A with xret
