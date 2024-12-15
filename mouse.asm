@@ -9,6 +9,17 @@ GRACTL = $D01D
 HPOSP0 = $D000
 HPOSP1 = $D001
 PMBASE = $D407
+
+; CIO
+IOCB = $340
+ICCOM = $342
+ICBAL = $344
+ICBAH = $345
+ICBLL = $348
+ICBLH = $349
+CIOV = $e456
+EOL = $9B
+CMD_PUT_RECORDS = 9
 		
 		run install_irq
 		org $600
@@ -23,7 +34,6 @@ install_irq
 		sta PMBASE
 		lda #(14*16)+10
 		sta pcolr0
-		;ldx #16
 		 
 		sei
 		lda #<start
@@ -37,6 +47,7 @@ install_irq
 		sta $10			;enable POKMSK
 		sta $d20e		;enable IRQEN
 		cli
+		jsr banner
 finito	jmp finito
 		
 start 	
@@ -158,6 +169,22 @@ decrem	dey
 		jmp done
 increm	iny	
 done	rts
+
+banner
+		LDX #$00			 ; Set IOCB 0
+		LDA #CMD_PUT_RECORDS ; Set command
+		STA ICCOM,X          ; Store command in ICCOM of IOCB 0
+		LDA #<MESSAGE1       ; Load low byte of the first message address
+		STA ICBAL,X          ; Store low byte in IOCB 0
+		LDA #>MESSAGE1       ; Load high byte of the first message address
+		STA ICBAH,X          ; Store high byte in IOCB 0
+
+		LDA #20
+		STA ICBLL,X
+		LDA #0
+		STA ICBLH,X
+		JSR CIOV
+		RTS
 		
 prevx   .byte 00
 prevy   .byte 00		
@@ -165,19 +192,22 @@ xpos	.byte 80
 ypos	.byte 100 
 
 cursor
-		.byte $80 ; |X       |
-		.byte $C0 ; |XX      |
-		.byte $E0 ; |XXX     |
-		.byte $F0 ; |XXXX    |
-		.byte $F8 ; |XXXXX   |
-		.byte $FC ; |XXXXXX  |
-		.byte $FE ; |XXXXXXX |
-		.byte $FF ; |XXXXXXXX|
-		.byte $F0 ; |XXXX    |
-		.byte $D8 ; |XX XX   |
-		.byte $98 ; |X  XX   |
-		.byte $0C ; |    XX  |
-		.byte $0C ; |    XX  |
-		.byte $0C ; |    XX  |
-		.byte $06 ; |     XX |
-		.byte $06 ; |     XX |
+	.byte $80 ; |X       |
+	.byte $C0 ; |XX      |
+	.byte $E0 ; |XXX     |
+	.byte $F0 ; |XXXX    |
+	.byte $F8 ; |XXXXX   |
+	.byte $FC ; |XXXXXX  |
+	.byte $FE ; |XXXXXXX |
+	.byte $FF ; |XXXXXXXX|
+	.byte $F0 ; |XXXX    |
+	.byte $D8 ; |XX XX   |
+	.byte $98 ; |X  XX   |
+	.byte $0C ; |    XX  |
+	.byte $0C ; |    XX  |
+	.byte $0C ; |    XX  |
+	.byte $06 ; |     XX |
+	.byte $06 ; |     XX |
+
+MESSAGE1:
+    .BYTE 'Mouse initialized...',EOL
