@@ -22,7 +22,7 @@ EOL = $9B
 CMD_PUT_RECORDS = 9
 		
 		run install_irq
-		org $600
+		org $9000
 		
 install_irq
 		lda DMACTL
